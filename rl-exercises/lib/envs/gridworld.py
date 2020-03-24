@@ -53,7 +53,7 @@ class GridworldEnv(discrete.DiscreteEnv):
         
         # create grid
         grid = np.arange(nS).reshape(shape)
-        iterator = np.nditer(grid, flags='multi_index')
+        iterator = np.nditer(grid, flags=['multi_index'])
         
         # iterate through grid
         while not iterator.finished:
@@ -84,7 +84,7 @@ class GridworldEnv(discrete.DiscreteEnv):
                 P[s][DOWN] = [(1.0, ns_down, reward, is_done(ns_down))]
                 P[s][LEFT] = [(1.0, ns_left, reward, is_done(ns_left))]
             
-            iterator.iternext
+            iterator.iternext()
             
         #initial state distribution
         isd = np.ones(nS)/ nS
@@ -93,7 +93,7 @@ class GridworldEnv(discrete.DiscreteEnv):
         
         super(GridworldEnv, self).__init__(nS, nA, P, isd)
     
-    def _render(self, mode, close=False):
+    def _render(self, mode='human', close=False):
         """
         Renders the current gridworld layout
          For example, a 4x4 grid with the mode="human" looks like:
@@ -106,28 +106,29 @@ class GridworldEnv(discrete.DiscreteEnv):
         if close:
             return
         
-        outfile = io.StringIO() if mode=='ansi' else sys.stdout
-        
+        outfile = io.StringIO() if mode == 'ansi' else sys.stdout
+
         grid = np.arange(self.nS).reshape(self.shape)
         it = np.nditer(grid, flags=['multi_index'])
-        
         while not it.finished:
             s = it.iterindex
             y, x = it.multi_index
-            
+
             if self.s == s:
-                output == " x "
-            elif s == 0 or s == (self.nS-1):
+                output = " x "
+            elif s == 0 or s == self.nS - 1:
                 output = " T "
             else:
                 output = " o "
-            
-            if x==0:
+
+            if x == 0:
                 output = output.lstrip()
-            if x==(self.nS - 1):
+            if x == self.shape[1] - 1:
                 output = output.rstrip()
-                
+
             outfile.write(output)
-            if x==self.shape[1] - 1:
+
+            if x == self.shape[1] - 1:
                 outfile.write("\n")
+            
             it.iternext()
