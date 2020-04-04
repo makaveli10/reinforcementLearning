@@ -74,6 +74,10 @@ def monte_carlo_control(env, num_episodes, discount_factor=1.0, epsilon=0.1):
     
     # loop through num_episodes
     for episode in range(num_episodes):
+        if (episode+1) % 1000 == 0:
+            print("\rEpisode {}/{}.".format(episode+1, num_episodes), end="")
+            sys.stdout.flush()
+            
         # Generate an episode
         trajectory = []
         
@@ -119,16 +123,20 @@ def monte_carlo_control(env, num_episodes, discount_factor=1.0, epsilon=0.1):
     return Q, policy
 
 if __name__=='__main__':
-    Q, policy = monte_carlo_control(env, num_episodes=100000, epsilon=0.1)
+    Q, policy = monte_carlo_control(env, num_episodes=500000, epsilon=0.1)
 
     # For plotting: Create value function from action-value function
     # by picking the best action at each state
     V = defaultdict(float)
-    for state, actions in Q.items():
-        action_value = np.max(actions)
+    policy = defaultdict(float)
+    for state, action_values in Q.items():
+        action_value = np.max(action_values)
         V[state] = action_value
+        policy[state] = np.argmax(action_values)
     plots.plot_value_function_save(V, 
                                    title="Optimal Value Function", 
-                                   file='../images/mc_control/')
+                                   file='images/mc_control_epsilon_greedy/')
+    plots.plot_policy(policy, 
+                      plot_filename='images/mc_control_epsilon_greedy/policy.png')
     
     
