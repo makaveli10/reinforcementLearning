@@ -165,10 +165,10 @@ if __name__=='__main__':
         V[state] = action_value
         policy[state] = np.argmax(action_values)
     plots.plot_value_function_save(V, 
-                                   file='images/mc_control_importance_sampling/', 
+                                   file='results/mc_control_importance_sampling/', 
                                    title="Optimal Value function")
     plots.plot_policy(policy, 
-                      plot_filename='images/mc_control_importance_sampling/policy.png')
+                      plot_filename='results/mc_control_importance_sampling/policy.png')
     
 
 

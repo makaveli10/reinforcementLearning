@@ -135,8 +135,8 @@ if __name__=='__main__':
         policy[state] = np.argmax(action_values)
     plots.plot_value_function_save(V, 
                                    title="Optimal Value Function", 
-                                   file='images/mc_control_epsilon_greedy/')
+                                   file='results/mc_control_epsilon_greedy/')
     plots.plot_policy(policy, 
-                      plot_filename='images/mc_control_epsilon_greedy/policy.png')
+                      plot_filename='results/mc_control_epsilon_greedy/policy.png')
     
     

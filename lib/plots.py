@@ -117,7 +117,7 @@ def plot_policy(policy, plot_filename="plot.png"):
         plt.show()
         
         
-def plot_episode_stats(stats, smoothing_window=10, noshow=False):
+def plot_episode_stats(stats, smoothing_window=10, noshow=False, file=None):
     # Plot the episode length over time
     fig1 = plt.figure(figsize=(10,5))
     plt.plot(stats.episode_lengths)
@@ -127,7 +127,10 @@ def plot_episode_stats(stats, smoothing_window=10, noshow=False):
     if noshow:
         plt.close(fig1)
     else:
-        plt.show(fig1)
+        if file is None:
+            plt.show(fig1)
+        else:
+            plt.savefig(file+'Episode_length_over_time.png')
 
     # Plot the episode reward over time
     fig2 = plt.figure(figsize=(10,5))
@@ -139,7 +142,10 @@ def plot_episode_stats(stats, smoothing_window=10, noshow=False):
     if noshow:
         plt.close(fig2)
     else:
-        plt.show(fig2)
+        if file is None:
+            plt.show(fig2)
+        else:
+            plt.savefig(file+'Episode_reward_over_time.png')
 
     # Plot time steps and episode number
     fig3 = plt.figure(figsize=(10,5))
@@ -150,6 +156,9 @@ def plot_episode_stats(stats, smoothing_window=10, noshow=False):
     if noshow:
         plt.close(fig3)
     else:
-        plt.show(fig3)
+        if file is None:
+            plt.show(fig3)
+        else:
+            plt.savefig(file+'Episode_per_time_step.png')
 
     return fig1, fig2, fig3
