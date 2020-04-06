@@ -51,6 +51,7 @@ def n_step_sarsa(env, num_episodes, n=5, discount_factor=1.0, alpha=0.5, epsilon
     Args:
         env: OpenAI environment.
         num_episodes: Number of episodes to run for.
+        n: future time steps to look ahead and calculate return for.
         discount_factor: Gamma discount factor.
         alpha: TD learning rate.
         epsilon: Chance the sample a random action. Float betwen 0 and 1.
@@ -74,10 +75,6 @@ def n_step_sarsa(env, num_episodes, n=5, discount_factor=1.0, alpha=0.5, epsilon
     # The policy we're following
     policy = create_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
     
-    max_reward = 0
-    total_reward = 0
-    rewards_per_episode = []
-
     for i_episode in range(num_episodes):
         # Print out which episode we're on, useful for debugging.
         if (i_episode + 1) % 10 == 0:
@@ -106,45 +103,37 @@ def n_step_sarsa(env, num_episodes, n=5, discount_factor=1.0, alpha=0.5, epsilon
             if t < T:
                 state, reward, done, _ = env.step(action)
                 
-                stored_rewards[(t+1) % n] = reward
-                stored_states[(t+1) % n] = state
+                stored_rewards[(t+1) % (n+1)] = reward
+                stored_states[(t+1) % (n+1)] = state
                 
                 # Update statistics
                 stats.episode_rewards[i_episode] += reward
                 stats.episode_lengths[i_episode] = t
-                
-                total_reward += reward
-                reward_for_episode += reward
                 
                 if done:
                     T = t + 1
                 else:
                     next_action_probs = policy(state)
                     action = np.random.choice(env.action_space.n, p=next_action_probs)
-                    stored_actions[(t+1) % n] = action
+                    stored_actions[(t+1) % (n+1)] = action
             tau = t - n + 1
             
             if tau >= 0:
                 # calculate G(tau:tau+n)
-                G = np.sum([discount_factor**(i-tau-1)*stored_rewards[i%n] for i in range(tau+1, min(tau+n, T)+1)])
+                G = np.sum([discount_factor**(i-tau-1)*stored_rewards[i%(n+1)] for i in range(tau+1, min(tau+n, T)+1)])
                 
                 
                 if tau + n < T:
-                    G += discount_factor**n * Q[stored_states[(tau+n) % n]][stored_actions[(tau+n) % n]]
+                    G += discount_factor**n * Q[stored_states[(tau+n) % (n+1)]][stored_actions[(tau+n) % (n+1)]]
                 
-                tau_s, tau_a = stored_states[tau % n], stored_actions[tau % n]
+                tau_s, tau_a = stored_states[tau % (n+1)], stored_actions[tau % (n+1)]
                 
                 # update Q value with n step return
                 Q[tau_s][tau_a] += alpha * (G - Q[tau_s][tau_a])
-                
-        if reward_for_episode > max_reward:
-            max_reward = reward_for_episode
-
-        rewards_per_episode.append(reward_for_episode)
         
-    return Q, stats, max_reward
+    return Q, stats
 
 
 if __name__=='__main__':
-    Q, stats, max_reward = n_step_sarsa(env, 200)
+    Q, stats = n_step_sarsa(env, 200)
     plots.plot_episode_stats(stats, file='results/n_step_sarsa/')
