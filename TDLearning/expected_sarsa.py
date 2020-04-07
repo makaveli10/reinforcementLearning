@@ -45,10 +45,10 @@ def create_epsilon_greedy_policy(Q, epsilon, nA):
     return policy_fn
 
 
-def sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
+def expected_sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
     """
-    SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
-    
+    Expected SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
+    Can also be used as Off policy. 
     Args:
         env: OpenAI environment.
         num_episodes: Number of episodes to run for.
@@ -95,7 +95,8 @@ def sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
             stats.episode_rewards[i_episode] += reward
             stats.episode_lengths[i_episode] = t
             
-            td_error = reward + discount_factor * Q[next_state][next_action]
+            # expected sarsa error
+            td_error = reward + discount_factor * np.sum([policy(next_state)[a] * Q[next_state][a] for a in range(env.action_space.n)])
             
             Q[state][action] += alpha * (td_error - Q[state][action])
             
@@ -109,5 +110,5 @@ def sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
 
 
 if __name__=='__main__':
-    Q, stats = sarsa(env, 300)
-    plots.plot_episode_stats(stats, file='results/sarsa/')
+    Q, stats = expected_sarsa(env, 300)
+    plots.plot_episode_stats(stats, file='results/expected_sarsa/')
