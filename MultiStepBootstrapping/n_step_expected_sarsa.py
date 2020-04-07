@@ -34,7 +34,7 @@ def create_epsilon_greedy_policy(Q, nA, epsilon=0.3):
     """
     def policy_fn(observation):
         # initialize action values
-        A = np.ones(nA) * (epsilon/nA)
+        A = np.ones(nA, dtype=np.float) * (epsilon/nA)
         
         # get the best action for current state
         best_action = np.argmax(Q[observation])
@@ -46,7 +46,7 @@ def create_epsilon_greedy_policy(Q, nA, epsilon=0.3):
 
 
 
-def n_step_expected_sarsa(env, num_episodes, n=5, gamma=0.9, epsilon=0.3, alpha=0.1):
+def n_step_expected_sarsa(env, num_episodes, n=5, gamma=0.9, epsilon=0.1, alpha=0.1):
     """
     (n step)Expected SARSA: On policy TD control. Finds the optimal epsilon greedy policy. The 
     algorithm is same as n step SARSA except that its last element is the branch over all action 
@@ -156,5 +156,5 @@ def n_step_expected_sarsa(env, num_episodes, n=5, gamma=0.9, epsilon=0.3, alpha=
 
 
 if __name__=='__main__':
-    Q, stats = n_step_expected_sarsa(env, num_episodes=300)
+    Q, stats = n_step_expected_sarsa(env, num_episodes=300, n=10)
     plots.plot_episode_stats(stats, file='results/n_step_expected_sarsa/')

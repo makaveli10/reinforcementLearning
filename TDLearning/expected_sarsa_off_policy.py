@@ -19,7 +19,7 @@ matplotlib.style.use('ggplot')
 env = CliffWalkingEnv()
 
 
-def create_epsilon_greedy_policy(Q, epsilon, nA):
+def create_epsilon_greedy_policy(Q,  nA, epsilon=0.1):
     """
     Behavior Policy.
     Creates an epsilon-greedy policy based on a given Q-function and epsilon.
@@ -44,7 +44,7 @@ def create_epsilon_greedy_policy(Q, epsilon, nA):
     return policy_fn
 
 
-def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
+def expected_sarsa_off_policy(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
     """
     Q-Learning algorithm: Off-policy TD control. Finds the optimal greedy policy
     while following an epsilon-greedy policy
@@ -61,10 +61,11 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
         Q is the optimal action-value function, a dictionary mapping state -> action values.
         stats is an EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
     """
+    nA = env.action_space.n
     
     # The final action-value function.
     # A nested dictionary that maps state -> (action -> action-value).
-    Q = defaultdict(lambda: np.zeros(env.action_space.n))
+    Q = defaultdict(lambda: np.zeros(nA))
 
     # Keeps track of useful statistics
     stats = plots.EpisodeStats(
@@ -72,7 +73,7 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
         episode_rewards=np.zeros(num_episodes))    
     
     # The policy we're following
-    policy = create_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
+    behavior_policy = create_epsilon_greedy_policy(Q, env.action_space.n)
     
     for i_episode in range(num_episodes):
         # Print out which episode we're on, useful for debugging.
@@ -84,7 +85,7 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
         
         for t in itertools.count():
             # sample action from behavior policy
-            action_probs = policy(state)
+            action_probs = behavior_policy(state)
             action = np.random.choice(env.action_space.n, p=action_probs)
             
             # take action and observe environment's effects
@@ -97,10 +98,11 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
             # sample next action from target policy
             next_action = np.argmax(Q[next_state])
             
-            td_target = reward + discount_factor * Q[next_state][next_action]
+            td_target = reward + discount_factor * ((1-epsilon)*Q[next_state][next_action]+(epsilon/nA)*np.sum([Q[next_state][a] for a in range(nA)]))
             
             # update Q value
             Q[state][action] += alpha * (td_target - Q[state][action])
+            
             
             if done: 
                 break
@@ -109,9 +111,10 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
     
     return Q, stats
 
+
 if __name__=='__main__':
-    Q, stats = q_learning(env, num_episodes=300)
-    plots.plot_episode_stats(stats, file='results/Q_learning/')
+    Q, stats = expected_sarsa_off_policy(env, num_episodes=300)
+    plots.plot_episode_stats(stats, file='results/expected_sarsa_off_policy/')
 
 
 

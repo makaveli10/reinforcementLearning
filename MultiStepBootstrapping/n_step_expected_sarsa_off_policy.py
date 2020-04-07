@@ -63,9 +63,9 @@ def create_target_policy(Q, nA, epsilon=0.1):
     return policy_fn
 
 
-def n_step_sarsa(env, num_episodes, n=5, gamma=0.9, alpha=0.1, epsilon=0.3):
+def n_step_expected_sarsa(env, num_episodes, n=10, gamma=0.9, alpha=0.1, epsilon=0.3):
     """
-    n step SARSA algorithm: Off-policy TD control. Finds the optimal target policy.
+    n step Expected SARSA algorithm: Off-policy TD control. Finds the optimal target policy.
     
     Args:
         env: OpenAI environment.
@@ -158,8 +158,12 @@ def n_step_sarsa(env, num_episodes, n=5, gamma=0.9, alpha=0.1, epsilon=0.3):
                 # calculate return
                 G = np.sum([(gamma**(i-tau-1))*stored_rewards[i%(n+1)] for i in range(tau+1, min(tau+n, T)+1)])
                 
+                
                 if tau+n < T:
-                    G += (gamma**n)*Q[stored_states[(tau+n) % (n+1)]][stored_actions[(tau+n) % (n+1)]]
+                    expected_sarsa_update = np.sum(
+                        [target_policy(stored_states[(tau+n) % (n+1)])[a] * Q[stored_states[(tau+n) % (n+1)]][a] for a in range(nA)]
+                    )
+                    G += (gamma**n) * expected_sarsa_update
                     
                 s_tau, a_tau = stored_states[tau % (n+1)], stored_actions[tau % (n+1)]
                 
@@ -169,5 +173,5 @@ def n_step_sarsa(env, num_episodes, n=5, gamma=0.9, alpha=0.1, epsilon=0.3):
 
 
 if __name__=='__main__':
-    Q, stats = n_step_sarsa(env, num_episodes=300, n=10)
-    plots.plot_episode_stats(stats, file='results/n_step_off_policy_sarsa/')
+    Q, stats = n_step_expected_sarsa(env, num_episodes=300)
+    plots.plot_episode_stats(stats, file='results/n_step_off_policy_expected_sarsa/')

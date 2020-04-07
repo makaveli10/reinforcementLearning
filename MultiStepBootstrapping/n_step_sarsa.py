@@ -135,5 +135,5 @@ def n_step_sarsa(env, num_episodes, n=5, discount_factor=1.0, alpha=0.5, epsilon
 
 
 if __name__=='__main__':
-    Q, stats = n_step_sarsa(env, 200)
+    Q, stats = n_step_sarsa(env, num_episodes=300, n=10)
     plots.plot_episode_stats(stats, file='results/n_step_sarsa/')
