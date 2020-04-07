@@ -46,7 +46,8 @@ def create_epsilon_greedy_policy(Q, epsilon, nA):
 
 def n_step_sarsa(env, num_episodes, n=5, discount_factor=1.0, alpha=0.5, epsilon=0.1):
     """
-    SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
+    (n step)SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
+    The algorithm looks forward n steps and then bootstraps from there to update the Q values.
     
     Args:
         env: OpenAI environment.
@@ -96,7 +97,6 @@ def n_step_sarsa(env, num_episodes, n=5, discount_factor=1.0, alpha=0.5, epsilon
         
         stored_actions[0] = action
         stored_states[0] = state
-        reward_for_episode = 0
         
         while tau < (T - 1):
             t += 1
