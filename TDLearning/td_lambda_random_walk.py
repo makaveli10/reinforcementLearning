@@ -50,7 +50,6 @@ def td_lambda(weights, rate, alpha):
         
         
 
-
 def random_walk(runs, lambdas, alphas):
     # play for 10 episodes for each run
     episodes = 10
