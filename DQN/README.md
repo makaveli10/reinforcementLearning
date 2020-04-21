@@ -1,4 +1,4 @@
-## DEEP Q-LEARNING
+# DEEP Q-LEARNING
 
  - The goal of the agent is to select actions in a fashion that maximizes cumulative 
  future reward. More formally, we use a deep convolutional neural network to approximate
