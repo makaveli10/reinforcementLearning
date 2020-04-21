@@ -16,7 +16,7 @@ selecting randomly from that experience for training the function approximator. 
 
 - The max operator in Deep Q-Learning uses the same values to both select and to evaluate an action which is more likely to select overestimated values resulting in overoptimistic value estimates.
 - DQN update => w[t+1] = w[t] + lr(Y(Q)t - Q(S[t],a;w(t)))*grad(Q(S[t],a;w(t)))
-Y(Q)t = R[t+1] + gamma * max(a)Q(S[t+1], a; w-(t))
+- where Y(Q)t = R[t+1] + gamma * max(a)Q(S[t+1], a; w-(t))
 - Decoupling the selection from the evaluation is the idea behind Double Q-learning.
 - For Double DQN Y(Q)t = R[t+1] + gamma * Q(S[t+1], argmax(a)Q(S[t+1], a; w(t)); w-(t)).
 - [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/pdf/1509.06461.pdf)
