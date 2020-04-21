@@ -12,7 +12,7 @@ selecting randomly from that experience for training the function approximator. 
 - The other trick mentioned in the paper is the use of a target network. They used an iterative update that adjusts the action-values (Q) towards target values that are only periodically updated, thereby reducing correlations with the target.
 
 
-# Double DQN
+## Double DQN
 
 - The max operator in Deep Q-Learning uses the same values to both select and to evaluate an action which is more likely to select overestimated values resulting in overoptimistic value estimates.
 - DQN update => w[t+1] = w[t] + lr(Y(Q)t - Q(S[t],a;w(t)))*grad(Q(S[t],a;w(t)))
