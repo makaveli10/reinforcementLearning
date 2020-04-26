@@ -9,7 +9,7 @@ import torchvision.transforms as T
 from torch.autograd import Variable
 
 from q_networks import DQNEstimator
-from replay_memory import ReplayMemory
+from replay_memory import ReplayMemory, PrioritizedReplayMemory
 
 
 class DQNAgent():
@@ -196,6 +196,120 @@ class DoubleDQNAgent():
         
         # zero out accumulated grads
         self.optimizer.zero_grad()
+        
+        # back prop
+        loss.backward()
+        self.optimizer.step()
+        return loss.item()
+
+
+class DoubleDQNPrioritizedReplayAgent():
+    def __init__(self, state_size, action_size):
+        # for rendering
+        self.render = False
+        self.load_model = False
+        # make True when inferencing
+        self.inference = False
+        self.state_size = state_size
+        self.action_size = action_size
+        
+        # hyperparams for estimator
+        self.gamma = 0.95
+        self.lr = 0.001
+        self.replay_memory_size = 50000
+        self.epsilon = 1.0
+        self.epsilon_min = 0.000001
+        self.explore_steps = 3000
+        self.epsilon_decay = (self.epsilon - self.epsilon_min) / self.explore_steps
+        self.batch_size = 32
+        self.replay_memory_init_size = 1000
+        
+        # Estimators
+        self.q_estimator = DQNEstimator(state_size, action_size)
+        self.target_estimator = DQNEstimator(state_size, action_size)
+        self.optimizer = optim.SGD(self.q_estimator.parameters(), lr=self.lr)
+        
+        # memory 
+        self.memory = PrioritizedReplayMemory(self.replay_memory_size)
+        if self.load_model:
+            self.q_estimator.load_state_dict(
+                torch.load('saved_model/cartpole_doubledqn_prioritized'))
+        if self.inference:
+            self.epsilon = 0.
+        
+    def update_target_estimator(self):
+        self.target_estimator.load_state_dict(self.q_estimator.state_dict())
+    
+    def get_action(self, state):
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.action_size)
+        else:
+            state = Variable(torch.from_numpy(state)).float()
+            q_values = self.q_estimator(state)
+            _, best_action = torch.max(q_values, dim=1)
+            return int(best_action)
+    
+    def push_sample(self, state, action, reward, next_state, is_done):
+        # calculate error for the transition
+        target = self.q_estimator(Variable(torch.FloatTensor(state))).data
+        q_values_next = self.q_estimator(Variable(torch.FloatTensor(next_state))).data
+        q_values_next_target = self.target_estimator(Variable(torch.FloatTensor(next_state))).data
+        old_val = target[0][action].numpy().copy()
+        if is_done:
+            target[0][action] = reward
+        else:
+            # Double DQN
+            target[0][action] = reward + self.gamma * q_values_next_target[0][torch.argmax(q_values_next)]
+        error = abs(torch.from_numpy(old_val) - target[0][action])
+        self.memory.add(error, (state, action, reward, next_state, is_done))
+        
+    def train(self):
+        # epsilon decay
+        if self.epsilon > self.epsilon_min:
+            self.epsilon -= self.epsilon_decay
+        # fetch samples from memory
+        batch, indices, importance = self.memory.sample(self.batch_size)
+        states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
+        states = np.reshape(states, [self.batch_size, self.state_size])
+        next_states = np.reshape(next_states, [self.batch_size, self.state_size])
+        # actions one hot encoding
+        actions = torch.LongTensor(actions)
+        actions_one_hot = F.one_hot(actions, num_classes=self.action_size)
+        actions_one_hot = torch.FloatTensor(actions_one_hot.float())
+        actions_one_hot = Variable(actions_one_hot)
+        
+        # Forward prop
+        states = torch.FloatTensor(states)
+        states = Variable(states)
+        preds = self.q_estimator(states)
+        
+        # get current action value
+        preds = torch.sum(torch.mul(preds, actions_one_hot), dim=1)
+        
+        # Double DQN
+        next_states = torch.FloatTensor(next_states)
+        next_states = Variable(next_states)
+        next_action_values = self.q_estimator(next_states)
+        best_actions = torch.argmax(next_action_values, dim=1)
+        q_values_next_target = self.target_estimator(next_states)
+        
+        dones = dones.astype(int)
+        dones = torch.FloatTensor(dones)
+        rewards = torch.FloatTensor(rewards)
+        target = rewards + (1 - dones) * self.gamma * q_values_next_target[np.arange(self.batch_size), 
+                                                                           best_actions]
+        target = Variable(target)
+        errors = torch.abs(preds - target).data.numpy()
+        
+        # update priority
+        for i in range(self.batch_size):
+            index = indices[i]
+            self.memory.update(index, errors[i])
+        
+        # zero out accumulated grads
+        self.optimizer.zero_grad()
+        
+        loss = (torch.FloatTensor(importance) * F.mse_loss(preds, target)).mean()
         
         # back prop
         loss.backward()
