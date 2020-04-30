@@ -9,7 +9,7 @@ class BinarySumTree():
         self.n_transitions = 0
         self.transition_index = 0
     
-    # TODO: propagate the change up the tree to the node
+    # propagate the change up the tree to the node
     def propagate_error(self, index, delta):
         # get the parent of current node
         parent = (index - 1) // 2
@@ -17,7 +17,7 @@ class BinarySumTree():
         if parent != 0:
             self.propagate_error(parent, delta) 
     
-    # TODO: Retrieve sample from the tree according to given priority
+    # Retrieve sample from the tree according to given priority
     def retrieve_transition(self, index, priority):
         # get children 
         left_child_index = 2 * index + 1
@@ -61,7 +61,7 @@ class BinarySumTree():
         transition = self.transitions[transition_index]
         return (index, self.tree[index], transition)
     
-    # TODO: get total error in the tree
+    # get total error in the tree
     def cumulative_error(self):
         return self.tree[0]
 
